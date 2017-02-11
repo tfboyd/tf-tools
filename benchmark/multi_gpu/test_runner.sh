@@ -18,6 +18,10 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 # Only used for mxnet
 NUM_LAYERS=50
 
+#Run with Real data
+SYNTHETIC_DATA=true
+DATA_DIR=/usr/local/google/home/tobyboyd/imagenet
+
 # Genearl Config
 LOG_FOLDER_PREFIX=logs  # Useful for grouping logs
 
@@ -72,6 +76,15 @@ while [[ $# -gt -0 ]]; do
       ;;
     --log_folder_prefix)
       LOG_FOLDER_PREFIX="$2"   # prefix for the log folder to help with organization
+      shift
+      ;;
+    --data_dir)
+      DATA_DIR="$2"   # prefix for the log folder to help with organization
+      SYNTHETIC_DATA=false
+      shift
+      ;;
+    --synthetic)
+      SYNTHETIC_DATA="$2"   # prefix for the log folder to help with organization
       shift
       ;;
     *)
@@ -166,14 +179,17 @@ GPUS=${GPUS_PER_HOST//,/$'\n'}  # change the commas to white space
 if [ "$MEM_TEST" = "false" ]; then
     for gpu in $GPUS; do
       if [ "${FRAMEWORK}" = "mxnet" ]; then
-            gpu=$(convertToMXNetGPU $gpu)
-            BENCH_EXEC="python ${MXNET_BENCHMARK_DIRECTORY}/train_imagenet.py --gpus ${gpu} --network ${MODEL} --batch-size ${BATCH_SIZE} \
+        gpu=$(convertToMXNetGPU $gpu)
+        BENCH_EXEC="python ${MXNET_BENCHMARK_DIRECTORY}/train_imagenet.py --gpus ${gpu} --network ${MODEL} --batch-size ${BATCH_SIZE} \
 --image-shape ${IMAGE_SHAPE} --num-epochs ${NUM_BATCHES} --kv-store device --benchmark 1 --disp-batches ${DISPLAY_EVERY} \
 --num-layers ${NUM_LAYERS}"
       else  
-            BENCH_EXEC="python ${TF_BENCHMARK_DIRECTORY}/tf_cnn_benchmarks.py --model=${MODEL} --batch_size=${BATCH_SIZE} --num_batches=${NUM_BATCHES} \
+        BENCH_EXEC="python ${TF_BENCHMARK_DIRECTORY}/tf_cnn_benchmarks.py --model=${MODEL} --batch_size=${BATCH_SIZE} --num_batches=${NUM_BATCHES} \
 --num_gpus=${gpu} --data_format=${DATA_FORMAT} --display_every=${DISPLAY_EVERY} --weak_scaling=true \
 --parameter_server=${PS_SERVER} --device=gpu --variable_update=${VARIABLE_UPDATE}"
+        if [ "$SYNTHETIC_DATA" = "false" ]; then
+          BENCH_EXEC="${BENCH_EXEC} --data_dir=${DATA_DIR} --nodistortions"
+        fi
       fi
         
       echo "Command to run: $BENCH_EXEC"
