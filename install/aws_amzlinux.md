@@ -18,6 +18,10 @@ time.  I also sometimes forget to copy the commands back to this file.  If it
 is not exact it will get you very close.  
 
 ## Install
+
+
+```
+
 sudo yum update -y
 sudo yum erase nvidia cuda
 
@@ -113,9 +117,7 @@ cd /tmp/tensorflow_pkg
 pip install --upgrade --force-reinstall <tensorflow file>
 
 #Do a quick Test
-
-
-
+```
 
 
 
