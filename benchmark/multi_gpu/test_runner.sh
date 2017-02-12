@@ -175,6 +175,22 @@ mkdir -p $LOG_FOLDER
 
 GPUS=${GPUS_PER_HOST//,/$'\n'}  # change the commas to white space
 
+# PID for the stats monitor
+STATS_MONITOR_PID=0
+# Handle CTRL-C or other term signal, log the max number of GPUs that showed
+# Errors, for now that means "HW Slowdown: Active"
+function cleanup {
+  # kill stats monitor incase it is running using all methods
+  kill $STATS_MONITOR_PID
+  wait $STATS_MONITOR_PID
+  pgrep "stats_monitor" | xargs kill
+  exit;
+}
+
+# catch being asked to end
+trap cleanup SIGINT SIGTERM
+
+
 # Execute the benchmark on each GPU config, e.g. 1, 2, 4 and then 8 GPUs.  
 if [ "$MEM_TEST" = "false" ]; then
     for gpu in $GPUS; do
@@ -191,10 +207,20 @@ if [ "$MEM_TEST" = "false" ]; then
           BENCH_EXEC="${BENCH_EXEC} --data_dir=${DATA_DIR} --nodistortions"
         fi
       fi
-        
+      
+      echo "Start stats monitor"
+      ./stats_monitor.sh --log_full_path $LOG_FOLDER/${gpu}_full_log.txt --log_summary_full_path $LOG_FOLDER/${gpu}_log_summary.txt  &
+      STATS_MONITOR_PID=$! 
+
       echo "Command to run: $BENCH_EXEC"
       $BENCH_EXEC 2>&1 | tee $LOG_FOLDER/${gpu}.txt
         
+      echo "Stats monitor: stopping"
+      kill $STATS_MONITOR_PID
+      echo "Wait for stats monitor to stop: ${STATS_MONITOR_PID}"
+      wait $STATS_MONITOR_PID
+      echo "Stats monitor: stopped"
+
       if [ "${FRAMEWORK}" = "mxnet" ]; then
         # average last 5 entries (not the most elegant string of commands)
         grep "samples/sec" $LOG_FOLDER/${gpu}.txt | awk '{print $5}' | tail -5 | \
