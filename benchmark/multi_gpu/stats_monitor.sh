@@ -37,11 +37,8 @@ MAX_SLOWDOWN_GPUS=0
 # Handle CTRL-C or other term signal, log the max number of GPUs that showed
 # Errors, for now that means "HW Slowdown: Active"
 function summarizeCleanup {
-  echo ""
   echo "Max GPUs throttled: ${MAX_SLOWDOWN_GPUS}"
-  if [ $MAX_SLOWDOWN_GPUS > 0 ]; then
-    echo "Max GPUs throttled: ${MAX_SLOWDOWN_GPUS}" >> $LOG_SUMMARY_FULL_PATH
-  fi
+  echo "Max GPUs throttled: ${MAX_SLOWDOWN_GPUS}" >> $LOG_SUMMARY_FULL_PATH
   exit;
 }
 
@@ -50,12 +47,17 @@ trap summarizeCleanup SIGINT SIGTERM
 
 # Log nvidia-smi data forever (until killed externally) and track when HW Slowdown: Active occures 
 # which indicates overheating and likely lower clock.
-while [ $KEEP_LOOP == true ]; do
+while [ "$KEEP_LOOP" = "true" ]; do
 
   RESULT=$(nvidia-smi -q -d MEMORY,UTILIZATION,CLOCK,COMPUTE,PERFORMANCE | tee -a ${LOG_FULL_PATH} | \
 grep -E 'HW Slowdown' | awk '!/Not Active/ {count++} END{print count}')
   
-  if [ ${RESULT} > ${MAX_SLOWDOWN_GPUS} ]; then
+  # Handle result being blank.  Likely a better way using awk above
+  if [ "$RESULT" = "" ]; then
+    RESULT=0
+  fi  
+
+  if [ "$RESULT" -gt "$MAX_SLOWDOWN_GPUS" ]; then
   	MAX_SLOWDOWN_GPUS=$RESULT
   	echo "$MAX_SLOWDOWN_GPUS GPU(s) with slowdown"
   fi

@@ -25,6 +25,9 @@ DATA_DIR=/usr/local/google/home/tobyboyd/imagenet
 # Genearl Config
 LOG_FOLDER_PREFIX=logs  # Useful for grouping logs
 
+# Stats monitor
+MONITOR_STATS=true
+
 while [[ $# -gt -0 ]]; do
   key="$1"
   echo $key
@@ -85,6 +88,10 @@ while [[ $# -gt -0 ]]; do
       ;;
     --synthetic)
       SYNTHETIC_DATA="$2"   # prefix for the log folder to help with organization
+      shift
+      ;;
+    --monitor_stats)
+      MONITOR_STATS="$2"  # on by default set to false to turn off
       shift
       ;;
     *)
@@ -181,14 +188,19 @@ STATS_MONITOR_PID=0
 # Errors, for now that means "HW Slowdown: Active"
 function cleanup {
   # kill stats monitor incase it is running using all methods
-  kill $STATS_MONITOR_PID
-  wait $STATS_MONITOR_PID
-  pgrep "stats_monitor" | xargs kill
-  exit;
+  if [ "$STATS_MONITOR_PID" -gt "0" ]; then 
+    kill $STATS_MONITOR_PID
+    wait $STATS_MONITOR_PID
+    pgrep "stats_monitor" | xargs kill >/dev/null 2>&1
+    exit;
+  fi
 }
 
 # catch being asked to end
 trap cleanup SIGINT SIGTERM
+
+# This is a little lame but double check stats_monitor was killed
+pgrep "stats_monitor" | xargs kill >/dev/null 2>&1
 
 
 # Execute the benchmark on each GPU config, e.g. 1, 2, 4 and then 8 GPUs.  
@@ -208,18 +220,23 @@ if [ "$MEM_TEST" = "false" ]; then
         fi
       fi
       
-      echo "Start stats monitor"
-      ./stats_monitor.sh --log_full_path $LOG_FOLDER/${gpu}_full_log.txt --log_summary_full_path $LOG_FOLDER/${gpu}_log_summary.txt  &
-      STATS_MONITOR_PID=$! 
+      # run stats monitor (wathch for overheading cards)
+      if [ "$MONITOR_STATS" = "true" ]; then
+        echo "Start stats monitor..."
+        ./stats_monitor.sh --log_full_path $LOG_FOLDER/${gpu}_full_log.txt --log_summary_full_path $LOG_FOLDER/${gpu}_log_summary.txt  &
+        STATS_MONITOR_PID=$! 
+      fi
 
       echo "Command to run: $BENCH_EXEC"
       $BENCH_EXEC 2>&1 | tee $LOG_FOLDER/${gpu}.txt
-        
-      echo "Stats monitor: stopping"
-      kill $STATS_MONITOR_PID
-      echo "Wait for stats monitor to stop: ${STATS_MONITOR_PID}"
-      wait $STATS_MONITOR_PID
-      echo "Stats monitor: stopped"
+      
+      if [ "$STATS_MONITOR_PID" -gt "0" ]; then  
+        echo "Stats monitor: stopping"
+        kill $STATS_MONITOR_PID
+        echo "Wait for stats monitor to stop: ${STATS_MONITOR_PID}"
+        wait $STATS_MONITOR_PID
+        echo "Stats monitor: stopped"
+      fi
 
       if [ "${FRAMEWORK}" = "mxnet" ]; then
         # average last 5 entries (not the most elegant string of commands)
