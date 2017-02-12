@@ -20,7 +20,7 @@ is not exact it will get you very close.
 ## Install
 
 
-```
+```bash
 
 sudo yum update -y
 sudo yum erase nvidia cuda
