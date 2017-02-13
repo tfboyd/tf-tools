@@ -49,7 +49,7 @@ trap summarizeCleanup SIGINT SIGTERM
 # which indicates overheating and likely lower clock.
 while [ "$KEEP_LOOP" = "true" ]; do
 
-  RESULT=$(nvidia-smi -q -d MEMORY,UTILIZATION,CLOCK,COMPUTE,PERFORMANCE | tee -a ${LOG_FULL_PATH} | \
+  RESULT=$(nvidia-smi -q -d UTILIZATION,CLOCK,PERFORMANCE | tee -a ${LOG_FULL_PATH} | \
 grep -E 'HW Slowdown' | awk '!/Not Active/ {count++} END{print count}')
   
   # Handle result being blank.  Likely a better way using awk above
