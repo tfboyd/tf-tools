@@ -120,12 +120,12 @@ Defaults with exception of
 Y Cuda 8.0 
 compute 3.7 (max for K80 assuming not using g.xx instances)
 
-$ bazel build -c opt //tensorflow/tools/pip_package:build_pip_package
-
 # Works for p2 AWS instances with broadwell CPUs.
 # https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/i386-and-x86-64-Options.html#i386-and-x86-64-Options
 # core-avx2 is the best option for hazwel with gcc 4.8.3
-bazel build -c opt --copt=-march=core-avx2 --config=cuda //tensorflow/tools/pip_package:build_pip_package
+bazel build  --copt=-march=core-avx2 --config=cuda //tensorflow/tools/pip_package:build_pip_package
+# or to build for the native machine
+bazel build --config=opt --config=cuda //tensorflow/tools/pip_package:build_pip_package
 
 # Build the pip package
 bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
