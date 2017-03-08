@@ -113,6 +113,47 @@ pip install --upgrade --force-reinstall /tmp/tensorflow_pkg tensorflow*
 # to take up 100% CPU at times via top.
 sudo apt-get remove gstreamer1.0
 
+###########################
+# Enhanced Networking
+# http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking-ena.html#enhanced-networking-ena-ubuntu
+#####################
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y build-essential dkms
+
+# Get amazon drivers from github and build
+git clone https://github.com/amzn/amzn-drivers
+sudo mv amzn-drivers /usr/src/amzn-drivers-1.0.0
+sudo touch /usr/src/amzn-drivers-1.0.0/dkms.conf
+sudo vim /usr/src/amzn-drivers-1.0.0/dkms.conf
+# Add the following
+PACKAGE_NAME="ena"
+PACKAGE_VERSION="1.0.0"
+CLEAN="make -C kernel/linux/ena clean"
+MAKE="make -C kernel/linux/ena/ BUILD_KERNEL=${kernelver}"
+BUILT_MODULE_NAME[0]="ena"
+BUILT_MODULE_LOCATION="kernel/linux/ena"
+DEST_MODULE_LOCATION[0]="/updates"
+DEST_MODULE_NAME[0]="ena"
+AUTOINSTALL="yes"
+
+# Compile and install
+sudo dkms add -m amzn-drivers -v 1.0.0
+sudo dkms build -m amzn-drivers -v 1.0.0
+sudo dkms install -m amzn-drivers -v 1.0.0
+sudo update-initramfs -c -k all
+
+# Verify it is installed.  Not specific to look for just make sure an error
+# is not returned
+modinfo ena
+
+# Enable on the instances (once images the AMI should always have it enabled on startup)
+# Stop the instance using the console or the cli below.  Then set the attribute and restart.
+# Upgrade awscli (--ena-support is kind of new) suggest NOT using apt-get
+sudo pip install --upgrade awscli
+
+aws ec2 stop-instances --instance-id i-xxxxxxxxxx
+aws ec2 modify-instance-attribute --instance-id i-xxxxxxxx --ena-support
+
 ```
 
 
