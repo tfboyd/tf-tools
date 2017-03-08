@@ -49,13 +49,9 @@ sudo pip install wheel numpy
 ########################
 # If a new version of CUDA is out, get the link from NVIDIA's site.
 
-wget https://developer.nvidia.com/compute/cuda/8.0/prod/local_installers/cuda_8.0.44_linux-run
-./cuda_8.0.44_linux-run --extract=/home/ubuntu/
-sudo ./cuda-linux64-rel-8.0.44-21122537.run
-
-chmod +x cuda_8.0.44_linux-run
-# DO NOT install the video driver and the sample are not really needed
-./cuda_8.0.44_linux-run
+wget https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run
+./cuda_8.0.61_375.26_linux-run --extract=/home/ubuntu/
+sudo ./cuda-linux64-rel-8.0.61-21551265.run
 
 ############################################
 # Install CuDNN
