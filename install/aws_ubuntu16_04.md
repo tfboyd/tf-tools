@@ -31,7 +31,7 @@ sudo add-apt-repository ppa:graphics-drivers/ppa
 sudo apt-get update && sudo apt-get upgrade
 # Check https://launchpad.net/~graphics-drivers/+archive/ubuntu/ppa to see the
 # latest drivers available
-sudo apt-get install nvidia-375
+sudo apt-get install nvidia-378
 
 ############################################
 # Install basic packages needed for TensorFlow and generally needed
