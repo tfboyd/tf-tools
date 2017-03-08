@@ -76,7 +76,7 @@ Add to ~profile
 export CUDA_HOME=/usr/local/cuda
 export CUDA_ROOT=/usr/local/cuda
 PATH=$PATH:$CUDA_ROOT/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64:$CUDA_ROOT/extras/CUPTI/lib64
 source .profile
 
 ############################################
