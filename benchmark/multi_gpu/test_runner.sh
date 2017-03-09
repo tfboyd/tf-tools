@@ -161,7 +161,7 @@ convertToMXNetGPU ()
 # Set log folder name and links to tools folders
 LOG_FOLDER="${LOG_FOLDER_PREFIX}/${TIMESTAMP}_${FRAMEWORK}_${MODEL}_${BATCH_SIZE}"
 MXNET_BENCHMARK_DIRECTORY="${SRC_ROOT}/mxnet/example/image-classification"
-TF_BENCHMARK_DIRECTORY="${SRC_ROOT}/tensorflow/tensorflow/python/benchmarks/tf_cnn_benchmarks"
+TF_BENCHMARK_DIRECTORY="${HOME}/tf_cnn_bench"
 
 
 echo "##### Config #####"
@@ -247,7 +247,7 @@ awk '{ sum += $1; n++ } END { if (n > 0) print "Images/sec Last 5 Results:" sum 
     done
 
     echo "$BENCH_EXEC" >> $LOG_FOLDER/result.txt
-    grep "^Images/sec" $LOG_FOLDER/*.txt 2>&1 | tee -a $LOG_FOLDER/result.txt
+    grep "^images/sec" $LOG_FOLDER/*.txt 2>&1 | tee -a $LOG_FOLDER/result.txt
     # Gather up summary log messages into botto of results file
     cat $LOG_FOLDER/${gpu}_log_summary.txt >> $LOG_FOLDER/result.txt
 
