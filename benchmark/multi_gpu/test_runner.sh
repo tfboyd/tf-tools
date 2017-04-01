@@ -216,7 +216,7 @@ if [ "$MEM_TEST" = "false" ]; then
 --num_gpus=${gpu} --data_format=${DATA_FORMAT} --display_every=${DISPLAY_EVERY} --weak_scaling=true \
 --parameter_server=${PS_SERVER} --device=gpu --variable_update=${VARIABLE_UPDATE}"
         if [ "$SYNTHETIC_DATA" = "false" ]; then
-          BENCH_EXEC="${BENCH_EXEC} --data_dir=${DATA_DIR} --nodistortions"
+          BENCH_EXEC="${BENCH_EXEC} --data_dir=${DATA_DIR} --nodistortions --data_name=imagenet"
         fi
       fi
       
