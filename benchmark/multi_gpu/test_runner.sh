@@ -247,7 +247,7 @@ awk '{ sum += $1; n++ } END { if (n > 0) print "Images/sec Last 5 Results:" sum 
     done
 
     echo "$BENCH_EXEC" >> $LOG_FOLDER/result.txt
-    grep "^images/sec" $LOG_FOLDER/*.txt 2>&1 | tee -a $LOG_FOLDER/result.txt
+    grep "^total images/sec" $LOG_FOLDER/*.txt 2>&1 | tee -a $LOG_FOLDER/result.txt
     # Gather up summary log messages into botto of results file
     cat $LOG_FOLDER/${gpu}_log_summary.txt >> $LOG_FOLDER/result.txt
 
