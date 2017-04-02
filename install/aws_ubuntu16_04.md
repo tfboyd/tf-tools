@@ -153,6 +153,19 @@ sudo pip install --upgrade awscli
 aws ec2 stop-instances --instance-id i-xxxxxxxxxx
 aws ec2 modify-instance-attribute --instance-id i-xxxxxxxx --ena-support
 
+# ldcofig. There are some scenarios where .bash_profile does not seem to work
+# I often set the following when running benchmark tests so I know
+# cuda is always being picked up and reduces odd errors.
+
+sudo vi /etc/ld.so.conf
+/usr/local/cuda/lib64
+/usr/local/cuda/extras/CUPTI/lib64
+# Load new config
+sudo ldconfig
+
+# Verify config 
+ldconfig -p
+
 ```
 
 
