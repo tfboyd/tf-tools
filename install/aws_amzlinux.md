@@ -148,8 +148,13 @@ python src/tensorflow/tensorflow/examples/tutorials/mnist/mnist_softmax.py
 # cuda is always being picked up and reduces odd errors.
 
 sudo vi /etc/ld.so.conf
-/usr/lib/cuda/lib64
+/usr/local/cuda/lib64
+/usr/local/cuda/extras/CUPTI/lib64
+# Load new config
 sudo ldconfig
+
+# Verify config 
+ldconfig -p
 
 
 ```
