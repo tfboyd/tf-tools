@@ -1,6 +1,8 @@
 # Run config
 cloud_type: aws
 
+tf_url: tensorflow-gpu
+
 # Shared with AWS and GCE
 instance_tag: tf-monster
 instance_type: p2.8xlarge
