@@ -1,0 +1,57 @@
+[
+  {
+    "name": "test_id",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "test_name",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "test_source",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "result_source",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "result",
+    "type": "FLOAT",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "result_type",
+    "type": "STRING",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "user",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "test_info",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "system_info",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }, 
+  {
+    "name": "extras",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }                  
+]
