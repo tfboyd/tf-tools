@@ -565,7 +565,6 @@ class TestRunner(object):
     before encapsulating the code into a class.
 
     """
-
     if full_config.get('remote_home_dir'):
       self.remote_home_dir = full_config.get('remote_home_dir')
     self.bench_home = os.path.join(self.remote_home_dir,os.path.basename(self.local_tf_cnn_bench_dir))
@@ -581,15 +580,19 @@ class TestRunner(object):
     else:
       self.sudo  = False
 
-  def load_yaml_configs(self, config_paths):
+  def load_yaml_configs(self, config_paths, base_dir=None):
     """Convert string of config paths into list of yaml objects
 
       If configs_string is empty a list with a single empty object is returned
     """
     configs = []
     for _, config_path in enumerate(config_paths):
+      if base_dir is not None:
+        config_path = os.path.join(base_dir,config_path) 
       f = open(config_path)
-      configs.append(yaml.safe_load(f))
+      config = yaml.safe_load(f)
+      config['config_path'] = config_path
+      configs.append(config)
       f.close()
     return configs
 
@@ -600,7 +603,8 @@ class TestRunner(object):
 
     # For each config (parent) loop over each sub_config.
     for i, global_config in enumerate(configs):
-      sub_configs = self.load_yaml_configs(global_config['sub_configs'])
+      base_dir = os.path.dirname(global_config['config_path'])
+      sub_configs = self.load_yaml_configs(global_config['sub_configs'], base_dir=base_dir)
       for j, run_config in enumerate(sub_configs):
         full_config = run_config.copy()
 

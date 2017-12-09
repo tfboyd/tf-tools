@@ -21,7 +21,7 @@ gpus: 1
 num_batches: 20
 
 sub_configs:
-  - '../auto_run/configs/aws/single_server/resnet50_32.yaml'
+  - 'aws/single_server/resnet50_32.yaml'
 #  - 'configs/aws/single_server/inception3.yaml'
 #  - 'configs/aws/single_server/vgg16.yaml'
 #  - 'configs/aws/single_server/alexnet_512.yaml'
