@@ -29,11 +29,9 @@ class TestRunner(object):
   Args:
     configs (str): 
     workspace (str): 
-    remote_home_dir (str): 
-    local_tf_cnn_bench_dir (str): 
+    bench_home (str): 
     ssh_key (str, optional):
     username (str, optional): 
-    install_bench (Boolean, optional):
     tf_url (str, optional):
     mount (Boolean, optional):
     sudo (Boolean, optional):
@@ -43,11 +41,9 @@ class TestRunner(object):
   def __init__(self,
               configs,
               workspace,
-              remote_home_dir,
-              local_tf_cnn_bench_dir,
+              bench_home,
               ssh_key=None,
               username=None,
-              install_bench=None,
               tf_url = None,
               mount = None,
               sudo=False,
@@ -60,14 +56,11 @@ class TestRunner(object):
     self.local_local_dir = os.path.join(self.workspace, 'logs')
     self.local_stdout_file = os.path.join(self.local_local_dir, 'stdout.log')
     self.local_stderr_file = os.path.join(self.local_local_dir, 'stderr.log')
-    self.remote_home_dir = remote_home_dir
-    self.local_tf_cnn_bench_dir = local_tf_cnn_bench_dir
+    self.bench_home = bench_home
     self.sudo = sudo
     self.action = action
     self.ssh_key = ssh_key
     self.tf_url = tf_url
-    self.install_bench = install_bench
-    self.bench_home = os.path.join(self.remote_home_dir,os.path.basename(self.local_tf_cnn_bench_dir))
     self.debug_level = debug_level
 
     # Creates workspace and default log folder
@@ -89,9 +82,6 @@ class TestRunner(object):
     """
     print('Setting up instance: {}'.format(instance.instance_id))
     self.kill_running_processes(instance)
-
-    if self.install_bench and full_config.get('cloud_type') != 'local':
-      self.install_benchmark_code(instance)
 
     if self.tf_url is not None or 'tf_url' in full_config:
       # Command line overrides config tf_url
@@ -201,68 +191,6 @@ class TestRunner(object):
         print_error=True)
     t.join()
     print('{}: Tensorflow installed'.format(instance.instance_id))
-
-
-  def install_benchmark_code(self, instance):
-    """Installs extra code for the benchmark
-
-    Args:
-      instance: instance object representing the server
-    """
-    print('{}: Installing benchmark code...'.format(instance.instance_id))
-
-    sudo = ''
-    if self.sudo:
-      sudo = 'sudo '
-
-    # Change permissions for home/ubuntu folder.  Needed if on GCE and useful in general
-    cmd_permissions = '{}chmod 775 {}'.format(sudo, self.remote_home_dir)
-    instance.ExecuteCommandAndStreamOutput(
-        cmd_permissions,
-        self.local_stdout_file,
-        self.local_stderr_file,
-        util.ExtractToStdout,
-        print_error=True)
-
-    output_filename = 'tf_cnn_bench.tar.gz'
-    output_local_full_path = os.path.join(self.workspace, output_filename)
-    output_remote_location = os.path.join(self.remote_home_dir, output_filename)
-
-    # Checks if path provided contains benchmark files
-    if not os.path.exists(
-        os.path.join(self.local_tf_cnn_bench_dir, 'tf_cnn_benchmarks.py')):
-      raise ValueError(
-          'self.local_tf_cnn_bench_dir ({}) does not contain tf_cnn_benchmarks.py'.
-          format(self.local_tf_cnn_bench_dir))
-
-    # tar local copy of tf_cnn_bench
-    with tarfile.open(output_local_full_path, 'w:gz') as tar:
-      tar.add(
-          self.local_tf_cnn_bench_dir,
-          arcname=os.path.basename(self.local_tf_cnn_bench_dir))
-
-    # copy to remote host and unzip to target directory
-    instance.UploadFile(output_local_full_path, output_remote_location)
-
-    # Remove old folders.  Uses sudo as the files may have been uploaded by another user.
-    # Dangerous as it could delete anyting recusively if self.bench_home is set wrong.
-    cleanup_cmd = '{}rm -rf {}'.format(sudo, self.bench_home)
-    t = instance.ExecuteCommandInThread(cleanup_cmd, self.local_stdout_file,
-                                        self.local_stderr_file, util.ExtractToStdout)
-    t.join()
-
-    # Unzip benchmark code
-    untar_CMD = 'tar xzf ' + output_remote_location + ' -C ' + self.remote_home_dir + ';rm ' + output_remote_location
-    t = instance.ExecuteCommandInThread(untar_CMD, self.local_stdout_file,
-                                        self.local_stderr_file, util.ExtractToStdout)
-    t.join()
-
-    # Install helper files from git repo
-    # Not needed for distributed
-    #cmd = 'git clone https://github.com/tfboyd/tf-tools.git'
-    #t = util.ExecuteCommandInThread(ssh_client, cmd, self.local_stdout_file, self.local_stderr_file, util.ExtractToStdout)
-    #t.join()
-    print('{}: Benchmark code installed'.format(instance.instance_id))
 
 
   def results_directory(self, run_config):
@@ -565,10 +493,6 @@ class TestRunner(object):
     before encapsulating the code into a class.
 
     """
-    if full_config.get('remote_home_dir'):
-      self.remote_home_dir = full_config.get('remote_home_dir')
-    self.bench_home = os.path.join(self.remote_home_dir,os.path.basename(self.local_tf_cnn_bench_dir))
-
     if full_config.get('cloud_type') in ['gce', 'ssh', 'local'
                                         ] and self.username == 'ubuntu':
       self.username = os.getlogin()
@@ -645,11 +569,9 @@ def Main():
   """Program main, called after args are parsed into FLAGS."""
   test_runner = TestRunner(FLAGS.config,
                         FLAGS.workspace,
-                        FLAGS.remote_home_dir,
-                        FLAGS.local_tf_cnn_bench_dir,
+                        FLAGS.tf_cnn_bench_dir,
                         ssh_key = FLAGS.ssh_key,
                         username = FLAGS.username,
-                        install_bench = FLAGS.install_bench,
                         tf_url = None if FLAGS.tf_url == '' else FLAGS.tf_url,
                         mount = FLAGS.mount,
                         sudo = False if FLAGS.sudo == '' else FLAGS.sudo,
@@ -693,15 +615,10 @@ if __name__ == '__main__':
       help='Set to '
       ' to not mount data drives')
   parser.add_argument(
-      '--local_tf_cnn_bench_dir',
+      '--bench_home',
       type=str,
       default=os.path.join(os.environ['HOME'], 'tf_cnn_bench'),
-      help='Local path to the benchmark scripts')
-  parser.add_argument(
-      '--install_bench',
-      type=str,
-      default=True,
-      help='If true install bench code, if not skip that step')
+      help='Path to the benchmark scripts')
   # Less used Flags
   parser.add_argument(
       '--action',
@@ -723,11 +640,6 @@ if __name__ == '__main__':
       type=str,
       default='',
       help='If true, sudo can be used if False sudo cannot be used.')
-  parser.add_argument(
-      '--remote_home_dir',
-      type=str,
-      default='/home/ubuntu',
-      help='Home directory on remote host')
 
   FLAGS, unparsed = parser.parse_known_args()
 
