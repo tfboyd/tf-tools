@@ -18,7 +18,8 @@ def upload_result(result,
                   table,
                   test_info=None,
                   system_info=None,
-                  extras=None):
+                  extras=None,
+                  debug_level=0):
   """Upload test result.
 
   Note: BigQuery maps unicode() to STRING for python2.  If str is used that is
@@ -32,6 +33,7 @@ def upload_result(result,
     test_info: Additional test info, suggested use or extend TestInfo.
     system_info: Extra system info, suggested use or extend SystemInfo.
     extras: Dictionary of values that will be serialized to JSON.
+    debug_level: Set to 1 for debug info.
   """
 
   # Project is disgarded in favor of what the user passes in.
