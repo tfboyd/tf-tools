@@ -32,8 +32,8 @@ def process_results_folder(folder_path, report_config={}):
 
   # Reporting project and dataset defaults are to the dev instance.
   report_project = report_config.get('report_project', 'google.com:tensorflow-performance')
-  report_dataset = report_config.get('report_dataset', 'benchmark_fun')
-  report_table =  report_config.get('report_table', 'test_results')
+  report_dataset = report_config.get('report_dataset', 'benchmark_results_dev')
+  report_table =  report_config.get('report_table', 'result')
   # Details about where the test was run
   test_harness = report_config.get('test_harness', 'tf_cnn_benchmark')
   test_environment = report_config.get('test_environment', 'unknown')
@@ -42,18 +42,17 @@ def process_results_folder(folder_path, report_config={}):
   accel_type = report_config.get('accel_type','unknown')
 
   # Main result config
-  result = result_info.Result(agg_result['config']['test_id'],
-                              agg_result['config']['name'],
+  result = result_info.build_test_result(agg_result['config']['test_id'],
                               agg_result['mean'],
                               result_type='exp_per_sec',
                               test_harness=test_harness,
                               test_environment=test_environment)
   
-  test_info = result_info.TestInfo(batch_size=agg_result['config']['batch_size'],
+  test_info = result_info.build_test_info(batch_size=agg_result['config']['batch_size'],
                                    model=agg_result['config']['model'],
                                    accel_cnt=agg_result['gpu'])
 
-  system_info = result_info.SystemInfo(platform=platform,
+  system_info = result_info.build_system_info(platform=platform,
                                        platform_type=platform_type,
                                        accel_type=accel_type)
 
