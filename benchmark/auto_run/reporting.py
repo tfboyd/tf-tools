@@ -42,7 +42,7 @@ def process_results_folder(folder_path, report_config={}):
   accel_type = report_config.get('accel_type','unknown')
 
   # Main result config
-  result = result_info.build_test_result(agg_result['config']['test_id'],
+  test_result, results = result_info.build_test_result(agg_result['config']['test_id'],
                               agg_result['mean'],
                               result_type='exp_per_sec',
                               test_harness=test_harness,
@@ -59,7 +59,7 @@ def process_results_folder(folder_path, report_config={}):
   print 'Uploading test results.'
 
 
-  result_upload.upload_result(result, project=report_project,
+  result_upload.upload_result(test_result, results, report_project,
     dataset=report_dataset, table=report_table, test_info=test_info,
     system_info=system_info, extras=agg_result)
 
