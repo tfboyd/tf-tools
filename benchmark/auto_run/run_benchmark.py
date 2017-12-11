@@ -5,19 +5,15 @@ import os
 import StringIO
 import tarfile
 import time
-import cluster
-import cluster_gce
+#import cluster
+#import cluster_gce
 import cluster_local
-import cluster_ssh
+#import cluster_ssh
 import command_builder
 import reporting
 import util
 import yaml
-
-DATA_MOUNT_DIR = '/home/ubuntu/efs'
-
-# Workspace and logs for the run, set during Init().
-EFS_COUNTER = 0
+import pwd
 
 # System variables
 PS_PORT = 50000
@@ -42,6 +38,7 @@ class TestRunner(object):
               configs,
               workspace,
               bench_home,
+              auto_test_config=None,
               ssh_key=None,
               username=None,
               tf_url = None,
@@ -50,7 +47,7 @@ class TestRunner(object):
               action=None,
               debug_level=1):
     """Initalize the TestRunner with values."""
-
+    self.auto_test_config = auto_test_config
     self.configs = configs
     self.workspace = workspace
     self.local_local_dir = os.path.join(self.workspace, 'logs')
@@ -88,11 +85,6 @@ class TestRunner(object):
       tf_url = self.tf_url if self.tf_url else full_config['tf_url']
       self.install_tensorflow(instance, tf_url)
 
-    if full_config.get('cloud_type') == 'gce':
-      self.mount_data_drive_gce(instance, full_config)
-    elif full_config.get('cloud_type') == 'aws':
-      self.mount_data_drive_aws(instance, full_config)
-
 
   def kill_running_processes(self, instance):
     """Kill benchmark processes for a clean start
@@ -117,51 +109,6 @@ class TestRunner(object):
         util.ExtractToStdout,
         print_error=True,
         ok_exit_status=[0, 1, -1])
-
-
-  def mount_data_drive_gce(self, instance, config):
-    """Mount data drive, e.g. ImageNet
-
-    Args:
-      instance: instance object representing the server
-    """
-    if self.mount:
-      # TODO: This should be a config but is the only disk we have now.
-      instance.AttachDiskMaybe('imagenet')
-
-      # Do not print error, mount will result in error if an issue exists.
-      instance.ExecuteCommandAndWait(
-          'sudo mkdir ' + DATA_MOUNT_DIR, print_error=False)
-      efs_mount_cmd = (
-          'sudo mount -o discard,ro -t ext4 '
-          '/dev/disk/by-id/google-persistent-disk-1 {}'.format(DATA_MOUNT_DIR))
-      print('{}: Mounting EFS drive:{}'.format(instance.instance_id,
-                                               efs_mount_cmd))
-      instance.ExecuteCommandAndWait(efs_mount_cmd, print_error=True)
-
-
-  def mount_data_drive_aws(self, instance, config):
-    """Mount data drive, e.g. ImageNet
-
-    Args:
-      instance: instance object representing the server
-    """
-    if self.mount:
-      global EFS_COUNTER
-      efs_server = config['efs'][EFS_COUNTER]
-      if EFS_COUNTER + 1 == len(config['efs']):
-        EFS_COUNTER = 0
-      else:
-        EFS_COUNTER = EFS_COUNTER + 1
-
-      # Do not print error, mount will result in error if an issue exists.
-      instance.ExecuteCommandAndWait('mkdir ' + DATA_MOUNT_DIR, print_error=False)
-      efs_mount_cmd = ('sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,'
-                       'wsize=1048576,hard,timeo=600,retrans=2 {}:/ {}'.format(
-                           efs_server, DATA_MOUNT_DIR))
-      print('{}: Mounting EFS drive:{}'.format(instance.instance_id,
-                                               efs_mount_cmd))
-      instance.ExecuteCommandAndWait(efs_mount_cmd, print_error=True)
 
 
   def install_tensorflow(self, instance, tf_path):
@@ -346,136 +293,6 @@ class TestRunner(object):
           os.path.join(self.workspace, 'results', suite_dir_name))
 
 
-  def aws_benchmarks(self, full_config, global_close=None):
-    """ Run AWS Distributed tests
-
-    Args:
-    full_config: Configuration of the test to run
-    global_close: If set overrides the locally set close behavior.
-    Used to close the instances after multiple runs.
-
-    """
-    print 'Running AWS Benchmarks'
-
-    # Get Configs to run
-
-
-    close_behavior = full_config.get('instance_on_finish')
-    if global_close:
-      close_behavior = global_close
-
-    # Pre check if instances exist
-    instance_chk = cluster.LookupAwsInstances(
-        instance_tag=full_config['instance_tag'])
-    print('{} instances found, want {} instances'.format(
-        len(instance_chk), full_config['instance_count']))
-
-    if full_config['instance_force_reuse'] == True or len(
-        instance_chk) >= full_config['instance_count']:
-      print('Using existing instances...')
-      with cluster.ReuseAwsInstances(
-          instance_tag=full_config['instance_tag'],
-          ssh_key=os.path.join(os.environ['HOME'], self.ssh_key),
-          close_behavior=close_behavior) as instances:
-        self.run_test_suite(full_config, instances)
-
-    else:
-      print 'Create new instances...'
-      if len(instance_chk) != 0 and len(
-          instance_chk) < full_config['instance_count']:
-        raise ValueError(
-            'Instances({}) already exist for instance_tag:{} but less than '
-            'requested({}) for test.'.format(
-                len(instance_chk), full_config['instance_tag'],
-                full_config['instance_count']))
-
-      with cluster.AwsInstances(
-          num_instances=full_config['instance_count'],
-          image_id=full_config['instance_ami'],
-          instance_type=full_config['instance_type'],
-          key_name='tf_perf_aws',
-          instance_tag=full_config['instance_tag'],
-          ssh_key=os.path.join(os.environ['HOME'], self.ssh_key),
-          placement_group=None,
-          close_behavior=close_behavior) as instances:
-
-        print '{} instances created'.format(len(instances))
-        self.run_test_suite(full_config, instances)
-
-
-  def gce_benchmarks(self, full_config, global_close=None):
-    """ Run GCE Distributed tests
-
-    """
-    print 'Running GCE Benchmarks'
-
-    # Setup Authentication
-    os.environ[
-        'GOOGLE_APPLICATION_CREDENTIALS'] = '/google/data/ro/users/to/tobyboyd/tf_benchmarks/gce/tensorflow-performance-api.json'
-
-    # Get Configs to run
-    configs = command_builder.LoadYamlRunConfig(full_config, self.debug_level)
-
-    close_behavior = full_config.get('instance_on_finish')
-    if global_close:
-      close_behavior = global_close
-
-    # Pre check if instances exist
-    instance_chk = cluster_gce.LookupGCEInstances(
-        full_config['gce_project'],
-        full_config['gce_zone'],
-        None,
-        None,
-        tag=full_config['instance_tag'])
-    print('{} instances found, want {} instances'.format(
-        len(instance_chk), full_config['instance_count']))
-
-    if full_config['instance_force_reuse'] == True or len(
-        instance_chk) >= full_config['instance_count']:
-      print('Using existing instances...')
-      with cluster_gce.ReuseGCEInstances(
-          instance_tag=full_config['instance_tag'],
-          ssh_key=os.path.join(os.environ['HOME'], self.ssh_key),
-          close_behavior=close_behavior,
-          username=self.username) as instances:
-        self.run_test_suite(full_config, instances)
-    else:
-      print('Create new instances...')
-      if len(instance_chk) != 0 and len(
-          instance_chk) < full_config['instance_count']:
-        raise ValueError(
-            'Instances({}) already exist for instance_tag:{} but less than '
-            'requested({}) for test.'.format(
-                len(instance_chk), full_config['instance_tag'],
-                full_config['instance_count']))
-
-      with cluster_gce.CreateGCEInstances(
-          num_instances=full_config['instance_count'],
-          image_id=full_config['instance_ami'],
-          instance_type=full_config['instance_type'],
-          instance_tag=full_config['instance_tag'],
-          ssh_key=os.path.join(os.environ['HOME'], self.ssh_key),
-          close_behavior=close_behavior,
-          username=self.username) as instances:
-
-        print('{} instances created'.format(len(instances)))
-        self.run_test_suite(full_config, instances)
-
-
-  def ssh_benchmarks(self, full_config):
-    """ Run SSH benchmark tests
-
-    """
-    print('Running SSH Benchmarks')
-
-    with cluster_ssh.UseSSHInstances(
-        hosts=full_config['hosts'],
-        ssh_key=os.path.join(os.environ['HOME'], self.ssh_key),
-        username=self.username,
-        virtual_env_path=full_config.get('virtual_env_path')) as instances:
-      self.run_test_suite(full_config, instances)
-
-
   def local_benchmarks(self, full_config):
     """ Run Local benchmark tests
 
@@ -495,7 +312,8 @@ class TestRunner(object):
     """
     if full_config.get('cloud_type') in ['gce', 'ssh', 'local'
                                         ] and self.username == 'ubuntu':
-      self.username = os.getlogin()
+      # os.getlogin does not work in docker containers
+      self.username = pwd.getpwuid(os.getuid())[0]
     else:
       self.username = username
 
@@ -540,24 +358,11 @@ class TestRunner(object):
             if k != 'run_configs':
               full_config[k] = v
 
-        # Use the global on finish if processing the last sub_config of
-        # the last config passed.
-        global_close = None
-        if i == len(configs) - 1 and j == len(sub_configs) - 1:
-          global_close = global_config.get('global_on_finish')
-
         # Initialize global variables and setup the workspace
         self.reset_select_attributes(full_config)
 
         if self.action is None:
-          if full_config.get('cloud_type') == 'gce':
-            self.gce_benchmarks(full_config, global_close=global_close)
-          elif full_config.get('cloud_type') == 'ssh':
-            self.ssh_benchmarks(full_config)
-          elif full_config.get('cloud_type') == 'local':
-            self.local_benchmarks(full_config)
-          else:
-            self.aws_benchmarks(full_config, global_close=global_close)
+          self.local_benchmarks(full_config)
         else:
           if self.action == 'results':
             reporting.process_results_folder(FLAGS.results_folder)

@@ -13,7 +13,7 @@ from upload import result_info
 import command_builder
 
 
-def process_results_folder(folder_path):
+def process_results_folder(folder_path, report_config={}):
   """Process and print aggregated results found in folder
 
   Args:
@@ -28,38 +28,40 @@ def process_results_folder(folder_path):
         #print(result_file)
         results = results + parse_result_files(result_file)
 
-  agg_results = aggregate_results(results)
+  agg_result = aggregate_results(results)
 
-  agg_result = agg_results[0]
+  # Reporting project and dataset defaults are to the dev instance.
+  report_project = report_config.get('report_project', 'google.com:tensorflow-performance')
+  report_dataset = report_config.get('report_dataset', 'benchmark_fun')
+  report_table =  report_config.get('report_table', 'test_results')
+  # Details about where the test was run
+  test_harness = report_config.get('test_harness', 'tf_cnn_benchmark')
+  test_environment = report_config.get('test_environment', 'unknown')
+  platform = report_config.get('platform', 'unknown')
+  platform_type = report_config.get('platform_type', 'unknown')
+  accel_type = report_config.get('accel_type','unknown')
 
-  result_source = agg_result['config'].get('result_source', agg_result['config']['cloud_type'])
-  platform = agg_result['config']['cloud_type']
-  if agg_result['config'].get('platform'):
-    platform = agg_result['config']['platform']
-
-  plaform_type = 'unknown'
-  if agg_result['config'].get('platform_type'):
-    plaform_type = agg_result['config']['platform_type']
-  elif agg_result['config'].get('instance_type'):
-    plaform_type = agg_result['config']['instance_type']
-
-  # Write to big query
+  # Main result config
   result = result_info.Result(agg_result['config']['test_id'],
                               agg_result['config']['name'],
                               agg_result['mean'],
-                              result_type='exp_per_sec', 
-                              result_source=result_source)
+                              result_type='exp_per_sec',
+                              test_harness=test_harness,
+                              test_environment=test_environment)
   
   test_info = result_info.TestInfo(batch_size=agg_result['config']['batch_size'],
                                    model=agg_result['config']['model'],
                                    accel_cnt=agg_result['gpu'])
 
   system_info = result_info.SystemInfo(platform=platform,
-                                       platform_type=plaform_type,
-                                       accel_type=agg_result['config'].get('accel_type', 'unknown'))
+                                       platform_type=platform_type,
+                                       accel_type=accel_type)
 
-  result_upload.upload_result(result, project='google.com:tensorflow-performance',
-    dataset='benchmark_fun', table='test_results', test_info=test_info,
+  print 'Uploading test results.'
+
+
+  result_upload.upload_result(result, project=report_project,
+    dataset=report_dataset, table=report_table, test_info=test_info,
     system_info=system_info, extras=agg_result)
 
   print_results(agg_results)
@@ -169,6 +171,11 @@ def aggregate_results(results_list):
   # test_id.mean
   # test_id.std
   # test_id.max
+
+  # TODO(tobyboyd@): Adapted from code the handled aggregating multiple
+  # tests.  In this usage only one test is being aggreagted, finding two
+  # different test_ids in the results would be an error.
+
   agg_stage = {}
 
   # Groups the results to then be aggregated
@@ -196,7 +203,12 @@ def aggregate_results(results_list):
 
     agg_results.append(agg_result)
 
-  return agg_results
+  # See TODO on only processing one result, for now throwing error if two 
+  # results are found.
+
+  if len(agg_results) > 1:
+    raise Exception('Only one result (test_id) should exists after aggregation')
+  return agg_results[0]
 
 
 def get_report_columns():

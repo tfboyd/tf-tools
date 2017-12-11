@@ -1,20 +1,9 @@
 # Run tests locally.
 cloud_type: local
 
-# System Info if missing is set to unknown
-result_source: 'toby_workstation'
-accel_type: GTX1080
-platform_type: 'z420'  # if not set will try to use instance type
-platform: 'workstation'
-
-#tf_url: https://s3-us-west-2.amazonaws.com/tf-benchmark/tf_binary/tensorflow-1.3.0rc2.FINAL.cuDNN6.d984e91-cp27-cp27mu-linux_x86_64.whl
-remote_home_dir: /usr/local/google/home/tobyboyd
-repeat: 1
-env_vars: 'LD_LIBRARY_PATH=/usr/local/google/home/tobyboyd/lib/cuda-9.0/lib64'
-
 # General settings
+repeat: 1
 workers: 1
-framework: tensorflow
 
 # Worker settings override
 gpus: 1
@@ -25,3 +14,10 @@ sub_configs:
 #  - 'configs/aws/single_server/inception3.yaml'
 #  - 'configs/aws/single_server/vgg16.yaml'
 #  - 'configs/aws/single_server/alexnet_512.yaml'
+
+
+# Debug Only
+#tf_url: https://s3-us-west-2.amazonaws.com/tf-benchmark/tf_binary/tensorflow-1.3.0rc2.FINAL.cuDNN6.d984e91-cp27-cp27mu-linux_x86_64.whl
+#remote_home_dir: /usr/local/google/home/tobyboyd
+#env_vars: 'LD_LIBRARY_PATH=/usr/local/google/home/tobyboyd/lib/cuda-9.0/lib64'
+#framework: tensorflow
