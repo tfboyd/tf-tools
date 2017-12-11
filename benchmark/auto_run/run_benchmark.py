@@ -290,7 +290,7 @@ class TestRunner(object):
         time.sleep(5)
       suite_dir_name = '{}_{}'.format(last_config['test_suite_start_time'], last_config['test_id'])
       reporting.process_results_folder(
-          os.path.join(self.workspace, 'results', suite_dir_name))
+          os.path.join(self.workspace, 'results', suite_dir_name),report_config=self.auto_test_config)
 
 
   def local_benchmarks(self, full_config):

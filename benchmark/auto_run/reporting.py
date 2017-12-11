@@ -57,35 +57,10 @@ def process_results_folder(folder_path, report_config={}):
                                        accel_type=accel_type)
 
   print 'Uploading test results.'
-
-
   result_upload.upload_result(test_result, results, report_project,
     dataset=report_dataset, table=report_table, test_info=test_info,
     system_info=system_info, extras=agg_result)
 
-  print_results(agg_results)
-
-  return
-
-
-def print_results(results):
-  """Print results in comma delimited list
-
-  Args:
-    results: List of results to print
-  """
-  cols = get_report_columns()
-  for result in results:
-    print result
-    result_line = []
-    for col in cols:
-      value = result.get(col, None)
-      if value is None:
-        value = result.get('config', 'N/A').get(col, 'N/A')
-      result_line.append(value)
-    print(','.join(str(x) for x in result_line))
-    
-  return
 
 def parse_result_files(result_file_path):
   """Parses a result file
@@ -208,17 +183,6 @@ def aggregate_results(results_list):
   if len(agg_results) > 1:
     raise Exception('Only one result (test_id) should exists after aggregation')
   return agg_results[0]
-
-
-def get_report_columns():
-  return [
-      'timestamp', 'cuda', 'cudnn', 'accel_type', 'cloud_type',
-      'test_script_version', 'framework', 'framework_version',
-      'framework_hash', 'model', 'data_type', 'batch_size', 'gpu',
-      'mean', 'std', 'max', 'min', 'samples', 'ps_server', 'variable_update',
-      'all_reduce_spec', 'workspace', 'hardware_type', 'notable_args',
-      'servers', 'ps_servers', 'log_dir', 'test_script', 'tf_url'
-  ]
 
 
 def check_oom(result_file_path):
