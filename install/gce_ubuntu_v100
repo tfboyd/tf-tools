@@ -84,7 +84,12 @@ sudo chmod a+w /mnt/disks/nvme
 # use blkid to find the UUID and then.
 echo UUID=`sudo blkid -s UUID -o value /dev/md0` /mnt/disks/nvme ext4 discard,defaults,[NOFAIL_OPTION] 0 2 | sudo tee -a /etc/fstab
 
-
+######
+# Attach a Persistent Disk
+######################################
+# Assumes gcloud is already setup for the project and region
+gcloud compute instances attach-disk v100-tensorflow-tobyboyd --disk=imagenet-us-west --mode='rw'
+sudo mount -o discard,rw -t ext4 /dev/disk/by-id/google-persistent-disk-1 /data/imagenet
 
 
 
