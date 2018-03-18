@@ -38,7 +38,7 @@ sudo apt-get install python-pip
 ############################################
 # Install basic packages needed for TensorFlow and generally needed
 ########################
-sudo apt-get install libcupti-dev bc
+sudo apt-get install libcupti-dev
 
 # Install Python package manager
 sudo pip install -U pip
@@ -48,21 +48,23 @@ sudo pip install wheel numpy
 ###############################################
 # Install Docker + NVIDIA Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-
-#######
-# Setup NVMe drives
-# https://cloud.google.com/compute/docs/disks/local-ssd#creating_a_local_ssd
-################################################
-
-# Install the drivers
-sudo apt-get update && sudo apt-get install mdadm --no-install-recommends
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt-get update
 apt-cache policy docker-ce
 sudo apt-get install docker-ce
 
+# Add ubuntu to the docker group so it can run docker.
+sudo usermod -a -G docker $USER
+
 # Install NVIDIA-Docker from their site, it is changing too fast to document.
+https://github.com/NVIDIA/nvidia-docker
+
+#######
+# Setup NVMe drives (drives not working as of 17-MAR-2018)
+# https://cloud.google.com/compute/docs/disks/local-ssd#creating_a_local_ssd
+################################################
+# Install the drivers
+sudo apt-get update && sudo apt-get install mdadm --no-install-recommends
 
 # Check what you have
 lsblk
