@@ -65,9 +65,9 @@ sudo ./cuda-linux64-rel-8.0.61-21551265.run
 tar zxf cudnn-8.0-linux-x64-v5.1.tgz
 
 # Copy files into CUDA directories
-sudo cp -P include/cudnn.h /usr/local/cuda-8.0/include/
-sudo cp -P lib64/libcudnn* /usr/local/cuda-8.0/lib64/
-sudo chmod a+r /usr/local/cuda-8.0/lib64/libcudnn*
+sudo cp -P include/cudnn.h /usr/local/cuda/include/
+sudo cp -P lib64/libcudnn* /usr/local/cuda/lib64/
+sudo chmod a+r /usr/local/cuda/lib64/libcudnn*
 
 # Setup Profile with CUDA environment variables
 Add to ~profile
