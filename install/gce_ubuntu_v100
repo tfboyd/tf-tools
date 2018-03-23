@@ -60,7 +60,7 @@ sudo usermod -a -G docker $USER
 https://github.com/NVIDIA/nvidia-docker
 
 #######
-# Setup NVMe drives (drives not working as of 17-MAR-2018)
+# Setup NVMe drives (DRIVES NOT working as of 17-MAR-2018)
 # https://cloud.google.com/compute/docs/disks/local-ssd#creating_a_local_ssd
 ################################################
 # Install the drivers
