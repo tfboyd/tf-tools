@@ -20,8 +20,8 @@ There is no need to do this unless you are doing to run TensorFlow on this
 machine with nccl.  To only build just run the untar command and skip to the
 next section.
   * tar xf nccl_*
-  * sudo cp -P lib/nccl_* /usr/local/cuda/lib64
-  * sudo chmod a+r /usr/local/cuda-8.0/lib64/nccl*
+  * sudo cp -P lib/libnccl* /usr/local/cuda/lib64
+  * sudo chmod a+r /usr/local/cuda/lib64/libnccl*
   * run `ldconfig` assuming /usr/local/cuda/lib64 is in your ld.so.config
 
 ## Doing the build
