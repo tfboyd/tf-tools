@@ -36,22 +36,18 @@ sudo apt-get install nvidia-378
 ############################################
 # Install basic packages needed for TensorFlow and generally needed
 ########################
-sudo apt-get install -y build-essential git python-pip libfreetype6-dev libxft-dev libncurses-dev libopenblas-dev gfortran python-matplotlib libblas-dev liblapack-dev libatlas-base-dev python-dev python-pydot linux-headers-generic linux-image-extra-virtual unzip python-numpy swig python-pandas python-sklearn unzip wget pkg-config zip g++ zlib1g-dev libcurl3-dev
-sudo apt-get install libcupti-dev bc
+sudo apt-get install -y build-essential git python-pip libfreetype6-dev libxft-dev libncurses-dev libopenblas-dev gfortran python-matplotlib libblas-dev liblapack-dev libatlas-base-dev python-dev python-pydot linux-headers-generic linux-image-extra-virtual unzip python-numpy swig python-pandas python-sklearn unzip wget pkg-config zip g++ zlib1g-dev libcurl3-dev libcupti-dev
 
 # AWS EFS Driver (to mount drives from EFS)
 sudo apt-get -y install nfs-common
 
 # Install Python package manager
-sudo pip install -U pip
-sudo pip install --upgrade pip
-sudo pip install wheel numpy
+sudo pip install --upgrade pip wheel numpy
 
 ############################################
 # Install CUDA using packages rather than the script install.
 ########################
 # If a new version of CUDA is out, get the link from NVIDIA's site.
-
 wget https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run
 ./cuda_8.0.61_375.26_linux-run --extract=/home/ubuntu/
 sudo ./cuda-linux64-rel-8.0.61-21551265.run
@@ -83,8 +79,7 @@ source .profile
 ########################
 echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
 curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
-sudo apt-get update && sudo apt-get install bazel
-sudo apt-get upgrade bazel
+sudo apt-get update && sudo apt-get install bazel && sudo apt-get upgrade bazel
 
 ############################################
 # Install TensorFlow
@@ -197,18 +192,5 @@ sudo ldconfig
 ldconfig -p
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
