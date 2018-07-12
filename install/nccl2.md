@@ -114,6 +114,9 @@ Preconfigured Bazel build configs. You can use any of the below by adding "--con
 	--config=mkl         	# Build with MKL support.
 	--config=monolithic  	# Config for mostly static monolithic build.
 
+
+bazel build -c opt --copt=-march="haswell" --config=cuda //tensorflow/tools/pip_package:build_pip_package
+
 ```
 
 ## Running
