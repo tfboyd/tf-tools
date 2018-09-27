@@ -25,13 +25,11 @@ NVIDIA downloads after they are used.
 ############################################
 # Install NVIDIA Driver
 ########################
-# The best approach is to install the Ubuntu version of the driver.  Do not
-# install the driver included in the CUDA package unless necessary.  
-sudo add-apt-repository ppa:graphics-drivers/ppa
-sudo apt-get update && sudo apt-get upgrade
-# Check https://launchpad.net/~graphics-drivers/+archive/ubuntu/ppa to see the
-# latest drivers available
-sudo apt-get install nvidia-378
+# Add the NVIDIA Repos as documented on tensorflow.org
+# https://www.tensorflow.org/install/gpu
+# The find the driver you want consider running
+apt-cache madison cuda-drivers
+sudo apt-get install --no-install-recommends  cuda-drivers=410.48
 
 ############################################
 # Install basic packages needed for TensorFlow and generally needed
@@ -44,35 +42,17 @@ sudo apt-get -y install nfs-common
 # Install Python package manager
 sudo pip install --upgrade pip wheel numpy
 
-############################################
-# Install CUDA using packages rather than the script install.
-########################
-# If a new version of CUDA is out, get the link from NVIDIA's site.
-wget https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run
-./cuda_8.0.61_375.26_linux-run --extract=/home/ubuntu/
-sudo ./cuda-linux64-rel-8.0.61-21551265.run
+###########################################
+# Install NVIDIA Libraries
+# If not building, install them with apt-get
+# https://www.tensorflow.org/install/gpu
+# 
+# If building from soure download and install
+# packages manually or use the devel-docker
+################################################
 
-############################################
-# Install CuDNN
-########################
-# Download CuDNN from NVIDIA (get the Linux package not deb packages)
-# scp to ec2 instance
-# Cannot provide direct download due to needing to signup to get CuDNN.
-tar zxf cudnn-8.0-linux-x64-v5.1.tgz
 
-# Copy files into CUDA directories
-sudo cp -P include/cudnn.h /usr/local/cuda/include/
-sudo cp -P lib64/libcudnn* /usr/local/cuda/lib64/
-sudo chmod a+r /usr/local/cuda/lib64/libcudnn*
 
-# Setup Profile with CUDA environment variables
-Add to ~profile
-#CUDA Setup
-export CUDA_HOME=/usr/local/cuda
-export CUDA_ROOT=/usr/local/cuda
-PATH=$PATH:$CUDA_ROOT/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64:$CUDA_ROOT/extras/CUPTI/lib64
-source .profile
 
 ############################################
 # Install Bazel
@@ -82,7 +62,7 @@ curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
 sudo apt-get update && sudo apt-get install bazel && sudo apt-get upgrade bazel
 
 ############################################
-# Install TensorFlow
+# Build TensorFlow
 ########################
 git clone https://github.com/tensorflow/tensorflow
 
@@ -131,11 +111,6 @@ sudo usermod -a -G docker $USER
 
 # Test nvidia-smi with the latest official CUDA image
 docker run --runtime=nvidia --rm nvidia/cuda nvidia-smi
-
-##################
-# This removes a service that is not needed and looks, although it does not,
-# to take up 100% CPU at times via top, which is not really 100%.
-sudo apt-get remove gstreamer1.0
 
 ###########################
 # Enhanced Networking
