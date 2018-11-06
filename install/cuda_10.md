@@ -51,7 +51,7 @@ git checkout tags/v1.12.0-rc0
 # too lazy to ensure I type out all of the various flags I want.
 # use I think ivybridge if you want AVX.  If your GCC is older
 # it may not support the haswell alias.
-bazel build -c opt --copt=-march="haswell" //tensorflow/tools/pip_package:build_pip_package
+bazel build -c opt --copt=-march="broadwell" //tensorflow/tools/pip_package:build_pip_package
 # Make the .whl
 bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
   
